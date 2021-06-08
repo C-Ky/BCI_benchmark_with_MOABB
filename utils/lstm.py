@@ -5,9 +5,9 @@ from keras.layers import SimpleRNN, Dense, LSTM as _LSTM
 
 class LSTM(KerasModel):
 
-    def create_model(self, input_shape, num_hidden_neurons=128,
+    def create_model(self, nb_classes, input_shape, num_hidden_neurons=128,
                       num_layers=1, dropout=0.2, recurrent_dropout=0.2,
-                      print_summary=False):
+                      print_summary=False, loss='categorical_crossentropy', opt='adam', met=['accuracy']):
 
         model = Sequential()
         if num_layers > 1:
@@ -18,15 +18,15 @@ class LSTM(KerasModel):
         else:
             model.add(_LSTM(num_hidden_neurons, input_shape=input_shape, dropout=dropout,
                            recurrent_dropout=recurrent_dropout))
-        model.add(Dense(2, activation='softmax'))
+        model.add(Dense(nb_classes, activation='softmax'))
 
         if print_summary:
             print(model.summary())
 
         # compile the model
-        model.compile(loss='categorical_crossentropy',
-                      optimizer='adam',
-                      metrics=['accuracy'])
+        model.compile(loss=loss,
+                      optimizer=opt,
+                      metrics=met)
 
         # assign and return
         self.model = model

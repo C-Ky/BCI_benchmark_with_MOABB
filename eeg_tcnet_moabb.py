@@ -26,11 +26,8 @@ from keras.backend import argmax, cast
 
 from sklearn.base import BaseEstimator, TransformerMixin #,ClassifierMixin
 from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline 
-from sklearn.pipeline import make_pipeline
-from sklearn.metrics import accuracy_score, cohen_kappa_score
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import accuracy_score, roc_auc_score
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.metrics import accuracy_score, cohen_kappa_score, roc_auc_score
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from sklearn.svm import SVC
 
@@ -48,43 +45,12 @@ from moabb.paradigms import LeftRightImagery, MotorImagery
 
 # Local imports
 from utils.tcnet import EEGTCNet
-#from utils.data_loading import prepare_features
 
 
 mne.set_log_level("CRITICAL")
 moabb.set_log_level("info")
 warnings.filterwarnings("ignore")
 
-
-# Loads an already compiled model (should not be relevant)
-def build_model(path):
-    model = load_model(path)
-    #model = load_model(path +'best.h5')
-    for l in model.layers:
-        l.trainable = False
-    lr = 0.001
-    model.compile(loss = 'categorical_crossentropy',optimizer=Adam(lr=lr),metrics=['accuracy'])
-    return model
-
-
-class Scaler( BaseEstimator, TransformerMixin ):
-    #Class Constructor 
-    def __init__( self ):
-        self.scalers = {}
-        for j in range(22):
-            self.scalers[j] = StandardScaler()
-    
-    #Return self nothing else to do here    
-    def fit( self, X, y = None ):
-        for j in range(22):
-            self.scalers[j].fit(X[:,0 ,j, :])
-        return self 
-    
-    #Method that describes what we need this transformer to do
-    def transform( self, X, y = None ):
-        for j in range(22):
-            X[:,0,j,:] = self.scalers[j].transform(X[:,0 ,j, :])
-        return X
 
 
 def auc_score(y_true, y_pred):
@@ -93,13 +59,14 @@ def auc_score(y_true, y_pred):
     else:
         return roc_auc_score(y_true, y_pred)
 
+"""
 def auc(y_true, y_pred):
     return tf.py_func(auc1, (y_true, y_pred), tf.double)
+"""
 
 
-# Creates model for the TCNET 
-def model():    #change to 2 classes 
-    data_path = 'data/'
+# Creates model for the TCNET
+def model_tcnet(classes, channels, sp, epochs, loss, opt, met):
     F1 = 8
     KE = 32
     KT = 4
@@ -107,17 +74,8 @@ def model():    #change to 2 classes
     FT = 12
     pe = 0.2
     pt = 0.3
-    classes = 2 #4
-    channels = 22
-    sp = 1001
-    crossValidation = False
-    batch_size = 64
-    epochs = 750
-    lr = 0.001
-    met = [auc] #auc(equivalent to roc_auc) #accuracy
     model = EEGTCNet(nb_classes = classes,Chans=channels, Samples=sp, layers=L, kernel_s=KT,filt=FT, dropout=pt, activation='elu', F1=F1, D=2, kernLength=KE, dropout_eeg=pe)
-    opt = Adam(lr=lr)
-    model.compile(loss=sparse_categorical_crossentropy, optimizer=opt, metrics=met)
+    model.compile(loss=loss, optimizer=opt, metrics=met)
     return model
 
 
@@ -168,10 +126,21 @@ class Estimator(BaseEstimator, KerasClassifier):
 #############################################################################
 # MOABB application
 
+## Parameters
+classes = 4 #2 #4
+channels = 22
+samples = 1001
+batch_size = 64
+epochs = 750
+lr = 0.01
+loss = 'sparse_categorical_crossentropy' #categorical_crossentropy
+opt = Adam(lr=lr)
+met = ['accuracy'] #auc_score(for roc_auc metrics used for two classes in MOABB) #accuracy
+
 ## Making pipelines
 print("Making pipelines: ")
 pipelines={}
-clf = model()
+clf = model_tcnet(classes, channels, samples, epochs, loss, opt, met)
 pipe = make_pipeline(Estimator(clf, 64))
 pipelines['tcnet'] = pipe
 
@@ -179,7 +148,7 @@ pipelines['tcnet'] = pipe
 ## Specifying datasets, paradigm and evaluation
 print("Specifying datasets, paradigms and evaluation: ")
 datasets = [BNCI2014001()]
-paradigm = LeftRightImagery() #2 classes (right and left hands) #MotorImagery(events=["left_hand", "right_hand", "feet", "tongue"], n_classes=4) #LeftRightImagery()
+paradigm = MotorImagery(events=["left_hand", "right_hand", "feet", "tongue"], n_classes=4) #2 classes (right and left hands) #MotorImagery(events=["left_hand", "right_hand", "feet", "tongue"], n_classes=4) #LeftRightImagery()
 evaluation = WithinSessionEvaluation(paradigm=paradigm, datasets=datasets, overwrite=True)
 
 ## Getting and saving results

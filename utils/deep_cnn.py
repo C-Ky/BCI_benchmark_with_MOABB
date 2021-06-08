@@ -7,8 +7,8 @@ from keras.layers import SimpleRNN, Dense, Conv2D, Dropout, BatchNormalization, 
 
 class Deep_CNN(KerasModel):
 
-    def create_model(self, augmented_data=False, print_summary=False, downsampled=False):
-        CLASS_COUNT = 2
+    def create_model(self, nb_classes, augmented_data=False, print_summary=False, downsampled=False, loss='categorical_crossentropy', opt='adam', met=['accuracy']):
+        CLASS_COUNT = nb_classes
 
         model = Sequential()
         if augmented_data and downsampled:
@@ -164,9 +164,9 @@ class Deep_CNN(KerasModel):
             print(model.summary())
 
         # compile the model
-        model.compile(loss='categorical_crossentropy',
-                      optimizer='adam',
-                      metrics=['accuracy'])
+        model.compile(loss=loss,
+                      optimizer=opt,
+                      metrics=met)
 
         # assign and return
         self.model = model

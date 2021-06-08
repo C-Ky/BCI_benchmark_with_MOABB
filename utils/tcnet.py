@@ -29,6 +29,19 @@ from keras.backend import cast, argmax
 import tensorflow as tf
 
 
+# Creates model for the TCNET 
+def model_tcnet(classes, channels, sp, epochs, loss, opt, met):
+    F1 = 8
+    KE = 32
+    KT = 4
+    L = 2
+    FT = 12
+    pe = 0.2
+    pt = 0.3
+    model = EEGTCNet(nb_classes = classes,Chans=channels, Samples=sp, layers=L, kernel_s=KT,filt=FT, dropout=pt, activation='elu', F1=F1, D=2, kernLength=KE, dropout_eeg=pe)
+    model.compile(loss=loss, optimizer=opt, metrics=met)
+    return model
+
 def EEGTCNet(nb_classes,Chans=64, Samples=128, layers=3, kernel_s=10,filt=10, dropout=0, activation='relu', F1=4, D=2, kernLength=64, dropout_eeg=0.1):
     input1 = Input(shape = (1,Chans, Samples))
     input2 = Permute((3,2,1))(input1)

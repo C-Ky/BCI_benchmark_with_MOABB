@@ -1,57 +1,107 @@
-import gumpy
+#!/usr/bin/env python
+# coding: utf-8
+
+#!/usr/bin/env python3
+
+
+# General imports
+import os
+import warnings
 import numpy as np
-from datetime import datetime
-import kapre
-import keras
-import keras.utils as ku
+import scipy.io as sio
+import matplotlib.pyplot as plt
+
+# Machine learning imports
+import tensorflow as tf
+from keras.models import load_model
+from keras.optimizers import Adam
+from keras.losses import categorical_crossentropy, sparse_categorical_crossentropy, binary_crossentropy
+
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.metrics import accuracy_score, cohen_kappa_score, roc_auc_score
+from sklearn.preprocessing import StandardScaler
 
 
-def load_preprocess_data(data, debug, lowcut, highcut, w0, Q, anti_drift, class_count, cutoff, axis, fs):
-    """Load and preprocess data.
-    The routine loads data with the use of gumpy's Dataset objects, and
-    subsequently applies some post-processing filters to improve the data.
-    """
-    # TODO: improve documentation
-
-    data_loaded = data.load()
-
-    if debug:
-        print('Band-pass filtering the data in frequency range from %.1f Hz to %.1f Hz... '
-          %(lowcut, highcut))
-
-        data_notch_filtered = gumpy.signal.notch(data_loaded.raw_data, cutoff, axis)
-        data_hp_filtered = gumpy.signal.butter_highpass(data_notch_filtered, anti_drift, axis)
-        data_bp_filtered = gumpy.signal.butter_bandpass(data_hp_filtered, lowcut, highcut, axis)
-
-        # Split data into classes.
-        # TODO: as soon as gumpy.utils.extract_trails2 is merged with the
-        #       regular extract_trails, change here accordingly!
-        class1_mat, class2_mat = gumpy.utils.extract_trials2(data_bp_filtered, data_loaded.trials,
-                                                             data_loaded.labels, data_loaded.trial_total,
-                                                             fs, nbClasses = 2)
-
-        # concatenate data for training and create labels
-        x_train = np.concatenate((class1_mat, class2_mat))
-        labels_c1 = np.zeros((class1_mat.shape[0], ))
-        labels_c2 = np.ones((class2_mat.shape[0], ))
-        y_train = np.concatenate((labels_c1, labels_c2))
-
-        # for categorical crossentropy
-        y_train = ku.to_categorical(y_train)
-
-        print("Data loaded and processed successfully!")
-        return x_train, y_train
-
-
-def print_version_info():
-    now = datetime.now()
-    print('%s/%s/%s' % (now.year, now.month, now.day))
-    print('Keras version: {}'.format(keras.__version__))
-    if keras.backend._BACKEND == 'tensorflow':
-        import tensorflow
-        print('Keras backend: {}: {}'.format(keras.backend._backend, tensorflow.__version__))
+def auc_score(y_true, y_pred):
+    if len(np.unique(y_true[:,1])) == 1:
+        return 0.5
     else:
-        import theano
-        print('Keras backend: {}: {}'.format(keras.backend._backend, theano.__version__))
-    print('Keras image dim ordering: {}'.format(keras.backend.image_dim_ordering()))
-    print('Kapre version: {}'.format(kapre.__version__))
+        return roc_auc_score(y_true, y_pred)
+
+def auc(y_true, y_pred):
+    return tf.py_func(auc1, (y_true, y_pred), tf.double)
+    
+
+# Encapsulate classifier (keras neural network) into an estimator, necessary to fit input/output for evaluation module of MOABB
+class Estimator(BaseEstimator, KerasClassifier):
+    """
+    Generic classifier class that uses a given model to handle estimator operations
+    """
+    def __init__(self, model, batch_size, k=5): # adjust the batch_size for your computer memory, GPU
+        self.model = model
+        self.batch_size = batch_size
+        self.k = k
+
+
+    def fit(self, X, y):
+        """
+        Required by scikit-learn
+        """
+        N_tr, N_ch, T = X.shape
+        X = X[:,:,:].reshape(N_tr,1,N_ch,T)
+        """
+        # necessary if using loss=categorical_crossentropy: convert y to one hot encoded vector
+        for i in range(len(y)):
+            if y[i] == 'tongue':
+                y[i] = 3
+            elif y[i] == 'feet':
+                y[i] = 2
+            elif y[i] == 'right_hand':
+                y[i] = 1
+            else:
+                y[i] = 0
+        y = y.astype(int)
+        y = to_categorical(y)""" 
+        self.model.fit(X, y, batch_size=self.batch_size, epochs=750, verbose=0)
+        print("fitting done")
+        return self
+
+
+    def predict(self, X, y=None):
+        """
+        Required by scikit-learn
+        """
+        p = self.model.predict(X).argmax(axis=-1) #returns array of predicted labels not as softmax
+        print("predict done")
+        return p
+
+    
+# Loads an already compiled model (should not be relevant)
+def build_model(path):
+    model = load_model(path)
+    #model = load_model(path +'best.h5')
+    for l in model.layers:
+        l.trainable = False
+    lr = 0.001
+    model.compile(loss = 'categorical_crossentropy',optimizer=Adam(lr=lr),metrics=['accuracy'])
+    return model
+
+
+class Scaler( BaseEstimator, TransformerMixin ):
+    #Class Constructor 
+    def __init__( self ):
+        self.scalers = {}
+        for j in range(22):
+            self.scalers[j] = StandardScaler()
+    
+    #Return self nothing else to do here    
+    def fit( self, X, y = None ):
+        for j in range(22):
+            self.scalers[j].fit(X[:,0 ,j, :])
+        return self 
+    
+    #Method that describes what we need this transformer to do
+    def transform( self, X, y = None ):
+        for j in range(22):
+            X[:,0,j,:] = self.scalers[j].transform(X[:,0 ,j, :])
+        return X
