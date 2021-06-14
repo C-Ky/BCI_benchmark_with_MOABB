@@ -1,3 +1,3 @@
 data/
-models/
+compiled_models/
 *.pyc
