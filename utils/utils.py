@@ -21,7 +21,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.metrics import accuracy_score, cohen_kappa_score, roc_auc_score
 from sklearn.preprocessing import StandardScaler
 
-
+        
 def auc_score(y_true, y_pred):
     if len(np.unique(y_true[:,1])) == 1:
         return 0.5

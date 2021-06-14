@@ -27,7 +27,7 @@ from keras.backend import argmax, cast
 from sklearn.base import BaseEstimator, TransformerMixin #,ClassifierMixin
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline, make_pipeline
-from sklearn.metrics import accuracy_score, cohen_kappa_score, roc_auc_score
+from sklearn.metrics import accuracy_score, roc_auc_score, get_scorer
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from sklearn.svm import SVC
 
@@ -44,7 +44,8 @@ from moabb.paradigms import LeftRightImagery, MotorImagery
 
 
 # Local imports
-from utils.tcnet import EEGTCNet
+from utils.models.tcnet import EEGTCNet
+from utils.local_paradigms import LeftRightImageryAccuracy
 
 
 mne.set_log_level("CRITICAL")
@@ -138,7 +139,7 @@ opt = Adam(lr=lr)
 met = ['accuracy'] #auc_score(for roc_auc metrics used for two classes in MOABB) #accuracy
 
 ## Making pipelines
-print("Making pipelines: ")
+print("Making pipelines")
 pipelines={}
 clf = model_tcnet(classes, channels, samples, epochs, loss, opt, met)
 pipe = make_pipeline(Estimator(clf, 64))
@@ -146,13 +147,13 @@ pipelines['tcnet'] = pipe
 
 
 ## Specifying datasets, paradigm and evaluation
-print("Specifying datasets, paradigms and evaluation: ")
+print("Specifying datasets, paradigms and evaluation")
 datasets = [BNCI2014001()]
-paradigm = MotorImagery(events=["left_hand", "right_hand", "feet", "tongue"], n_classes=4) #2 classes (right and left hands) #MotorImagery(events=["left_hand", "right_hand", "feet", "tongue"], n_classes=4) #LeftRightImagery()
+paradigm = LeftRightImageryAccuracy() #2 classes (right and left hands) #MotorImagery(events=["left_hand", "right_hand", "feet", "tongue"], n_classes=4) #LeftRightImagery()
 evaluation = WithinSessionEvaluation(paradigm=paradigm, datasets=datasets, overwrite=True)
 
 ## Getting and saving results
-print("Calculating results: ")
+print("Calculating results")
 results = evaluation.process(pipelines)
 if not os.path.exists("./results"):
     os.mkdir("./results")
