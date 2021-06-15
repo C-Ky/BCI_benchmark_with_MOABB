@@ -52,6 +52,8 @@ class Estimator(BaseEstimator, KerasClassifier):
         N_tr, N_ch, T = X.shape
         if self.name=='tcnet':
             X = X[:,:,:].reshape(N_tr,1,N_ch,T)
+        elif self.name=='lstm':
+            X = X[:,:,:].reshape(N_tr,N_ch,T)
         else:
             X = X[:,:,:].reshape(N_tr,N_ch,T,1)
         """
@@ -80,6 +82,8 @@ class Estimator(BaseEstimator, KerasClassifier):
             N_tr, N_ch, T = X.shape
             if self.name=='tcnet':
                 X = X[:,:,:].reshape(N_tr,1,N_ch,T)
+            elif self.name=='lstm':
+                X = X[:,:,:].reshape(N_tr,N_ch,T)
             else:
                 X = X[:,:,:].reshape(N_tr,N_ch,T,1)
         p = self.model.predict(X).argmax(axis=-1) #returns array of predicted labels not as softmax
