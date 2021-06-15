@@ -16,10 +16,10 @@ class Shallow_CNN(KerasModel):
         # print_summary=False
 
         if augmented_data and downsampled:
-			chans = 22 #3
-			sp = 1001 #512
-			f = 40
-			ks = 25
+            chans = 22 #3
+            sp = 1001 #512
+            f = 40
+            ks = 25
             # Conv Block 1
             model.add(Conv2D(input_shape=(chans, sp, 1), filters=f, kernel_size=(1, ks), strides=(1, 1),
                              padding='valid', activation=None))
@@ -39,10 +39,10 @@ class Shallow_CNN(KerasModel):
             model.add(Activation(activation='elu'))  # keras.backend.log: custom log function
             
         if augmented_data and not downsampled:
-			chans = 22 #3
-			sp = 1001 #1024
-			ks = 25
-			f=40
+            chans = 22 #3
+            sp = 1001 #1024
+            ks = 25
+            f=40
             # Conv Block 1
             model.add(Conv2D(input_shape=(chans, sp, 1), filters=f, kernel_size=(1, ks), strides=(1, 1),
                              padding='valid', activation=None))
@@ -63,24 +63,28 @@ class Shallow_CNN(KerasModel):
 
 
         else:
+            chans = 22
+            sp = 1001
+            f = 40
+            ks = 25
             # Conv Block 1
-            model.add(Conv2D(input_shape=(3, 1280, 1), filters=40, kernel_size=(1, 25), strides=(1, 1),
+            model.add(Conv2D(input_shape=(chans, sp, 1), filters=f, kernel_size=(1, ks), strides=(1, 1),
                              padding='valid', activation=None))
-            model.add(Reshape(target_shape=(3, 1256, 40, 1)))
+            model.add(Reshape(target_shape=(chans, sp-(ks-1), f, 1)))
             model.add(Dropout(0.5))
 
             # Conv Block 2
-            model.add(Conv3D(filters=40, kernel_size=(3, 1, 40), padding='valid',
+            model.add(Conv3D(filters=f, kernel_size=(chans, 1, f), padding='valid',
                              data_format='channels_last'))
             model.add(BatchNormalization())
-            model.add(Activation(keras.backend.square))  # custom squaring activation function
+            model.add(Activation(activation='elu'))  # keras.backend.square, custom squaring activation function
             model.add(Flatten())
-            model.add(Reshape(target_shape=(1256, 40, 1)))
+            model.add(Reshape(target_shape=(sp-(ks-1), f, 1)))
             model.add(Dropout(0.5))
 
             # Pooling
             model.add(AveragePooling2D(pool_size=(75, 1), strides=(15, 1), data_format='channels_last'))
-            model.add(Activation(keras.backend.log))  # custom log function
+            model.add(Activation(activation='elu'))  # keras.backend.log, custom log function
 
         # Classification
         model.add(Flatten())
