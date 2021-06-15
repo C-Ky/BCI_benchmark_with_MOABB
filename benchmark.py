@@ -101,5 +101,5 @@ print("Calculating results: ")
 results = evaluation.process(pipelines)
 if not os.path.exists("./results"):
     os.mkdir("./results")
-results.to_csv("./results/results_tcnet_moabb.csv")
-results = pd.read_csv("./results/results_tcnet_moabb.csv")
+results.to_csv("./results/results_benchmark.csv")
+results = pd.read_csv("./results/results_benchmark.csv")
