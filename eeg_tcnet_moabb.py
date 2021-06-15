@@ -68,9 +68,14 @@ def auc(y_true, y_pred):
 
 # Creates model for the TCNET
 def model_tcnet(classes, channels, sp, epochs, loss, opt, met):
-    F1 = 8
-    KE = 32
-    KT = 4
+    if classes==2:
+        F1 = 8
+        KE = 32
+        KT = 4
+    else: #classes=4
+        F1 = 8
+        KE = 32
+        KT = 4
     L = 2
     FT = 12
     pe = 0.2
@@ -97,6 +102,7 @@ class Estimator(BaseEstimator, KerasClassifier):
         """
         N_tr, N_ch, T = X.shape
         X = X[:,:,:].reshape(N_tr,1,N_ch,T)
+        print("X shape in perso fit: ", X.shape)
         """
         # necessary if using loss=categorical_crossentropy: convert y to one hot encoded vector
         for i in range(len(y)):
@@ -119,6 +125,9 @@ class Estimator(BaseEstimator, KerasClassifier):
         """
         Required by scikit-learn
         """
+        if len(X.shape)==3:
+            N_tr, N_ch, T = X.shape
+            X = X[:,:,:].reshape(N_tr,1,N_ch,T)
         p = self.model.predict(X).argmax(axis=-1) #returns array of predicted labels not as softmax
         print("predict done")
         return p
@@ -128,7 +137,7 @@ class Estimator(BaseEstimator, KerasClassifier):
 # MOABB application
 
 ## Parameters
-classes = 4 #2 #4
+classes = 2 #2 #4
 channels = 22
 samples = 1001
 batch_size = 64
