@@ -74,22 +74,20 @@ met = ['accuracy'] #auc(for roc_auc metrics used for two classes in MOABB) #accu
 ## Making pipelines
 print("Making pipelines: ")
 pipelines={}
-"""
 clf_shallow_cnn = Shallow_CNN('shallow_cnn')
 clf_shallow_cnn = clf_shallow_cnn.create_model(classes, loss=loss, opt=opt, met=met)
-pipe = make_pipeline(Estimator(clf_shallow_cnn, batch_size))
+pipe = make_pipeline(Estimator(clf_shallow_cnn, 'shallow_cnn', batch_size))
 pipelines['shallow_cnn'] = pipe
 clf_deep_cnn = Deep_CNN('deep_cnn')
 clf_deep_cnn = clf_deep_cnn.create_model(classes, loss=loss, opt=opt, met=met)
-pipe = make_pipeline(Estimator(clf_deep_cnn, batch_size))
+pipe = make_pipeline(Estimator(clf_deep_cnn, 'deep_cnn', batch_size))
 pipelines['deep_cnn'] = pipe
-"""
 clf_lstm = LSTM('lstm')
 clf_lstm = clf_lstm.create_model(classes, input_shape=(channels,sp), loss=loss, opt=opt, met=met)
-pipe = make_pipeline(Estimator(clf_lstm, batch_size))
+pipe = make_pipeline(Estimator(clf_lstm, 'lstm', batch_size))
 pipelines['lstm'] = pipe
 clf_tcnet = model_tcnet(classes, channels, sp, epochs, loss, opt, met)
-pipe = make_pipeline(Estimator(clf_tcnet, batch_size))
+pipe = make_pipeline(Estimator(clf_tcnet, 'tcnet', batch_size))
 pipelines['tcnet'] = pipe
 
 ## Specifying datasets, paradigm and evaluation
