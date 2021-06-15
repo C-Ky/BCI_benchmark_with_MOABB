@@ -38,10 +38,11 @@ class Estimator(BaseEstimator, KerasClassifier):
     """
     Generic classifier class that uses a given model to handle estimator operations
     """
-    def __init__(self, model, batch_size, k=5): # adjust the batch_size for your computer memory, GPU
+    def __init__(self, model, name, batch_size, k=5): # adjust the batch_size for your computer memory, GPU
         self.model = model
         self.batch_size = batch_size
         self.k = k
+        self.name = name
 
 
     def fit(self, X, y):
@@ -49,7 +50,10 @@ class Estimator(BaseEstimator, KerasClassifier):
         Required by scikit-learn
         """
         N_tr, N_ch, T = X.shape
-        X = X[:,:,:].reshape(N_tr,1,N_ch,T)
+        if self.name=='tcnet':
+            X = X[:,:,:].reshape(N_tr,1,N_ch,T)
+        else:
+            X = X[:,:,:].reshape(N_tr,N_ch,T,1)
         """
         # necessary if using loss=categorical_crossentropy: convert y to one hot encoded vector
         for i in range(len(y)):
@@ -74,7 +78,10 @@ class Estimator(BaseEstimator, KerasClassifier):
         """
         if len(X.shape)==3:
             N_tr, N_ch, T = X.shape
-            X = X[:,:,:].reshape(N_tr,1,N_ch,T)
+            if self.name=='tcnet':
+                X = X[:,:,:].reshape(N_tr,1,N_ch,T)
+            else:
+                X = X[:,:,:].reshape(N_tr,N_ch,T,1)
         p = self.model.predict(X).argmax(axis=-1) #returns array of predicted labels not as softmax
         print("predict done")
         return p
