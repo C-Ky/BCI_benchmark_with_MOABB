@@ -77,14 +77,14 @@ class Shallow_CNN(KerasModel):
             model.add(Conv3D(filters=f, kernel_size=(chans, 1, f), padding='valid',
                              data_format='channels_last'))
             model.add(BatchNormalization())
-            model.add(Activation(activation='elu'))  # keras.backend.square, custom squaring activation function
+            model.add(Activation(activation='elu'))  # custom squaring activation function
             model.add(Flatten())
             model.add(Reshape(target_shape=(sp-(ks-1), f, 1)))
             model.add(Dropout(0.5))
 
             # Pooling
             model.add(AveragePooling2D(pool_size=(75, 1), strides=(15, 1), data_format='channels_last'))
-            model.add(Activation(activation='elu'))  # keras.backend.log, custom log function
+            model.add(Activation(activation='elu'))  # custom log function
 
         # Classification
         model.add(Flatten())
