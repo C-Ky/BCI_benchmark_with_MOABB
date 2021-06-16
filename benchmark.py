@@ -30,6 +30,11 @@ from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.metrics import accuracy_score, roc_auc_score
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from sklearn.svm import SVC
+from sklearn.feature_selection import SelectKBest, mutual_info_classif
+from sklearn.model_selection import GridSearchCV
+
+from pyriemann.estimation import Covariances
+from pyriemann.spatialfilters import CSP
 
 import pandas as pd
 from joblib import dump, load
@@ -41,6 +46,7 @@ import moabb
 from moabb.datasets import BNCI2014001
 from moabb.evaluations import WithinSessionEvaluation, CrossSessionEvaluation
 from moabb.paradigms import LeftRightImagery, MotorImagery
+from moabb.pipelines.utils import FilterBank
 
 
 # Local imports
@@ -89,6 +95,11 @@ pipelines['lstm'] = pipe
 clf_tcnet = model_tcnet(classes, channels, sp, epochs, loss, opt, met)
 pipe = make_pipeline(Estimator(clf_tcnet, 'tcnet', batch_size))
 pipelines['tcnet'] = pipe
+parameters = {"C": np.logspace(-2, 2, 10)}
+clf = GridSearchCV(SVC(kernel="linear"), parameters)
+fbcsp = FilterBank(make_pipeline(Covariances(estimator="oas"), CSP(nfilter=4)))
+pipe = make_pipeline(fbcsp, SelectKBest(score_func=mutual_info_classif, k=10), clf)
+pipelines['fbcsp_svm'] = pipe
 
 ## Specifying datasets, paradigm and evaluation
 print("Specifying datasets, paradigms and evaluation: ")
