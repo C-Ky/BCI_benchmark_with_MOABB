@@ -20,7 +20,7 @@ from keras.utils import to_categorical
 from keras.models import load_model
 from keras.wrappers.scikit_learn import KerasClassifier
 from keras.optimizers import Adam
-from keras.losses import categorical_crossentropy, sparse_categorical_crossentropy, binary_crossentropy
+from keras.losses import categorical_crossentropy, sparse_categorical_crossentropy
 from keras.layers import Lambda
 from keras.backend import argmax, cast
 
@@ -34,7 +34,6 @@ from sklearn.feature_selection import SelectKBest, mutual_info_classif
 from sklearn.model_selection import GridSearchCV
 
 from pyriemann.estimation import Covariances
-#from pyriemann.spatialfilters import CSP
 
 import pandas as pd
 from joblib import dump, load
@@ -44,8 +43,7 @@ import pickle
 # MOABB imports
 import moabb
 from moabb.datasets import BNCI2014001
-from moabb.evaluations import WithinSessionEvaluation, CrossSessionEvaluation
-from moabb.paradigms import LeftRightImagery, MotorImagery
+from moabb.evaluations import CrossSessionEvaluation
 from moabb.pipelines.utils import FilterBank
 
 
@@ -54,7 +52,7 @@ from utils.models.tcnet import model_tcnet
 from utils.models.shallow_cnn import Shallow_CNN
 from utils.models.deep_cnn import Deep_CNN
 from utils.models.lstm import LSTM
-from utils.utils import auc, auc_score, Estimator
+from utils.utils import Estimator
 from utils.local_paradigms import LeftRightImageryAccuracy,FilterBankLeftRightImageryAccuracy
 
 
@@ -67,9 +65,9 @@ warnings.filterwarnings("ignore")
 # MOABB application
 
 ## Parameters
-classes = 2 #4
-channels = 22
-sp = 1001
+classes = 2
+channels = 22 #defined by dataset
+sp = 1001 #defined by dataset
 batch_size = 64
 epochs = 750
 lr = 0.01
@@ -98,20 +96,19 @@ pipelines['tcnet'] = pipe
 
 pipelines_fb={}
 clf = LDA()
-fbcsp = FilterBank(CSP(n_components=4))
+fbcsp = FilterBank(CSP())
 pipe = make_pipeline(fbcsp, clf)
 pipelines_fb['fbcsp_lda'] = pipe
 
 ## Specifying datasets, paradigm and evaluation
 print("Specifying datasets, paradigms and evaluation ")
 datasets = [BNCI2014001()]
-#datasets[0].subject_list = datasets[0].subject_list[:2]
-paradigm = LeftRightImageryAccuracy() #2 classes (right and left hands) with accuracy metric #MotorImagery(events=["left_hand", "right_hand", "feet", "tongue"], n_classes=4) #LeftRightImagery()
-evaluation = WithinSessionEvaluation(paradigm=paradigm, datasets=datasets, overwrite=False)
+paradigm = LeftRightImageryAccuracy() #2 classes (right and left hands) with accuracy metric
+evaluation = CrossSessionEvaluation(paradigm=paradigm, datasets=datasets, overwrite=False)
 
-filters = [[8, 12], [12, 16], [16, 20], [20, 24], [24, 28], [28, 35]]
-paradigm_fb = FilterBankLeftRightImageryAccuracy(filters=filters)
-evaluation_fb = WithinSessionEvaluation(paradigm=paradigm_fb, datasets=datasets, overwrite=False)
+filters = [[8, 12], [12, 16], [16, 20], [20, 24], [24, 28], [28, 32]]
+paradigm_fb = FilterBankLeftRightImageryAccuracy(filters=filters) #2 classes (right and left hands) with accuracy metric
+evaluation_fb = CrossSessionEvaluation(paradigm=paradigm_fb, datasets=datasets, overwrite=False)
 
 ## Getting and saving results
 print("Calculating results ")
