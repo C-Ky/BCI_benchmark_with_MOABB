@@ -35,8 +35,8 @@ class SMR_202104(BaseDataset):
 
     def __init__(self):
         super().__init__(
-            subjects=[1],
-            sessions_per_subject=10,
+            subjects=[i for i+1 for i in range(62)],
+            sessions_per_subject=7, #minimum number of sessions for each subject
             events={"LR": 1, "UD": 2, "2D": 3},
             code="202104",
             interval=[4,8],
@@ -49,22 +49,6 @@ class SMR_202104(BaseDataset):
         """return data for a single subject"""
         sessions = load_data(subject=subject, dataset=self.code, verbose=False)
         return sessions
-    """def _get_single_subject_data(self, subject):
-        #return data for a single subject
-        file_path_list = self.data_path(subject)
-
-        data = loadmat(file_path_list[0])
-        x = data["x"]
-        fs = data["fs"]
-        ch_names = ["ch" + str(i) for i in range(8)] + ["stim"]
-        ch_types = ["eeg" for i in range(8)] + ["stim"]
-        info = mne.create_info(ch_names, fs, ch_types)
-        raw = mne.io.RawArray(x, info)
-
-        sessions = {}
-        sessions["session_1"] = {}
-        sessions["session_1"]["run_1"] = raw
-        return sessions"""
 
     def data_path(url, path=None, force_update=False, update_path=None, verbose=None):
         """Download the data from one subject"""
@@ -80,9 +64,9 @@ def load_data(
     base_url=SMR_URL,
     verbose=None,
 ):  # noqa: D301
-    """Get paths to local copies of a BNCI dataset files.
+    """Get paths to local copies of a SMR dataset files.
 
-    This will fetch data for a given BNCI dataset. Report to the bnci website
+    This will fetch data for a given SMR dataset. Report to the bnci website
     for a complete description of the experimental setup of each dataset.
 
     Parameters
@@ -92,16 +76,16 @@ def load_data(
     dataset : string
         The bnci dataset name.
     path : None | str
-        Location of where to look for the BNCI data storing location.
+        Location of where to look for the SMR data storing location.
         If None, the environment variable or config parameter
-        ``MNE_DATASETS_BNCI_PATH`` is used. If it doesn't exist, the
-        "~/mne_data" directory is used. If the BNCI dataset
+        ``MNE_DATASETS_SMR_PATH`` is used. If it doesn't exist, the
+        "~/mne_data" directory is used. If the SMR dataset
         is not found under the given path, the data
         will be automatically downloaded to the specified folder.
     force_update : bool
         Force update of the dataset even if a local copy exists.
     update_path : bool | None
-        If True, set the MNE_DATASETS_BNCI_PATH in mne-python
+        If True, set the MNE_DATASETS_SMR_PATH in mne-python
         config to the given path. If None, the user is prompted.
     verbose : bool, str, int, or None
         If not None, override default verbose level (see :func:`mne.verbose`
@@ -145,7 +129,7 @@ def _load_data_202104(
 ):
     """Load data for 001-2014 dataset."""
     if (subject < 1) or (subject > 1):
-        raise ValueError("Subject must be between 1 and 9. Got %d." % subject)
+        raise ValueError("Subject must be between 1 and 62. Got %d." % subject)
 
     # fmt: off
     ch_names = [
