@@ -43,7 +43,7 @@ import pickle
 # MOABB imports
 import moabb
 from moabb.datasets import BNCI2014001
-from moabb.evaluations import CrossSessionEvaluation
+from moabb.evaluations import CrossSessionEvaluation, WithinSessionEvaluation
 from moabb.pipelines.utils import FilterBank
 
 
