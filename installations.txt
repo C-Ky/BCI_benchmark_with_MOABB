@@ -1,0 +1,5 @@
+#First create the conda environment from the NN-BCI-benchmark.yml file
+conda env create -f NN-BCI-benchmark.yml
+
+#Then install MOABB using pip
+pip install moabb
