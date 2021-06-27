@@ -21,19 +21,10 @@ from keras.models import load_model
 from keras.wrappers.scikit_learn import KerasClassifier
 from keras.optimizers import Adam
 from keras.losses import categorical_crossentropy, sparse_categorical_crossentropy
-from keras.layers import Lambda
-from keras.backend import argmax, cast
 
-from sklearn.base import BaseEstimator, TransformerMixin #,ClassifierMixin
-from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline, make_pipeline
-from sklearn.metrics import accuracy_score, roc_auc_score
+from sklearn.metrics import accuracy_score
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
-from sklearn.svm import SVC
-from sklearn.feature_selection import SelectKBest, mutual_info_classif
-from sklearn.model_selection import GridSearchCV
-
-from pyriemann.estimation import Covariances
 
 import pandas as pd
 from joblib import dump, load
